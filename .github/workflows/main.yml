@@ -64,11 +64,14 @@ jobs:
         git config --global user.name "RobotsAreCrazy"
         git config --global user.email "robotsarecrazy@github.com"
 
-    - name: Sync Minimal Manifest Source
+        - name: Sync Minimal Manifest Source
       run: |
+        git config --global url."https://github.com/".insteadOf "git@github.com:"
+        git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
         mkdir ~/orangefox
         cd ~/orangefox
-        repo init --depth=1 -u https://github.com/OrangeFoxRecovery/Manifest.git -b 12.1
+        repo init --depth=1 --no-repo-verify -u https://github.com/OrangeFoxRecovery/Manifest.git -b 12.1
+        repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
 
     - name: Clone Galaxy Tab A9+ Device Tree
       run: |
