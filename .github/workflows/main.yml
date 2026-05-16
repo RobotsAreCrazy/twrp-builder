@@ -1,36 +1,7 @@
-name: OrangeFox - Build
+name: OrangeFox - Build Galaxy Tab A9+
 
 on:
   workflow_dispatch:
-    inputs:
-      MANIFEST_BRANCH:
-        description: 'OrangeFox Manifest Branch (e.g., OrangeFox-12.1)'
-        required: true
-        default: 'OrangeFox-12.1'
-      DEVICE_TREE_URL:
-        description: 'Device Tree URL'
-        required: true
-        default: 'https://github.com/cdpcrp/custom_recovery_tree_samsung_gta9p.git'
-      DEVICE_TREE_BRANCH:
-        description: 'Device Tree Branch'
-        required: true
-        default: 'main'
-      DEVICE_PATH:
-        description: 'Device Path (e.g., device/samsung/gta9p)'
-        required: true
-        default: 'device/samsung/gta9p'
-      DEVICE_NAME:
-        description: 'Device Name (Codename)'
-        required: true
-        default: 'gta9p'
-      MAKEFILE_NAME:
-        description: 'Makefile Name (e.g., twrp_gta9p)'
-        required: true
-        default: 'twrp_gta9p'
-      BUILD_TARGET:
-        description: 'Build Target'
-        required: true
-        default: 'recovery'
 
 jobs:
   build:
@@ -38,60 +9,60 @@ jobs:
     permissions:
       contents: write
     steps:
-    - name: Checkout
+    - name: Checkout Repository
       uses: actions/checkout@v4
 
-    - name: Clean Up Server Space
+    - name: Maximize Server Disk Space
       run: |
-        docker rmi $(docker images -q) || true
-        sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /usr/local/lib/android || true
+        sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /usr/local/lib/android /opt/ghc || true
         sudo apt-get clean
 
-    - name: Install Compilation Dependencies
+    - name: Install Compiling Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git git-lfs gnupg gperf imagemagick lib32readline-dev lib32z1-dev libelf-dev liblz4-tool libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev python3 python3-pip
+        sudo apt-get install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf libxml2-utils lzop rsync unzip zip python3
 
-    - name: Install Repo Tool
+    - name: Set Up Google Repo Command Tool
       run: |
         mkdir -p ~/bin
         curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
         chmod a+x ~/bin/repo
         sudo ln -sf ~/bin/repo /usr/bin/repo
 
-    - name: Initialize Environment Variables
+    - name: Configure Git Credentials
       run: |
         git config --global user.name "RobotsAreCrazy"
         git config --global user.email "robotsarecrazy@github.com"
+        git config --global color.ui false
 
-    - name: Sync Minimal Manifest Source
+    - name: Sync Open Source Manifest Base
       run: |
-        git config --global url."https://github.com/".insteadOf "git@github.com:"
-        git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
         mkdir ~/orangefox
         cd ~/orangefox
-        repo init --depth=1 --no-repo-verify -u https://github.com/OrangeFoxRecovery/Manifest.git -b 12.1
+        export REPO_URL='https://storage.googleapis.com/git-repo-downloads/repo'
+        repo init --depth=1 --no-repo-verify -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
         repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
 
-    - name: Clone Galaxy Tab A9+ Device Tree
+    - name: Clone Cellular Tab A9+ Device Tree
       run: |
         cd ~/orangefox
-        git clone --depth=1 -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ${{ github.event.inputs.DEVICE_TREE_URL }} ~/orangefox/${{ github.event.inputs.DEVICE_PATH }}
+        git clone --depth=1 -b twrp-12.1 https://github.com/cdpcrp/custom_recovery_tree_samsung_gta9p.git device/samsung/gta9p
 
-    - name: Execute Cloud Compiler Build
+    - name: Compile Custom Recovery Image
       run: |
         cd ~/orangefox
+        export ALLOW_MISSING_DEPENDENCIES=true
         source build/envsetup.sh
-        lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng || lunch ${{ github.event.inputs.MAKEFILE_NAME }}-userdebug
-        mka ${{ github.event.inputs.BUILD_TARGET }}image -j$(nproc --all)
+        lunch twrp_gta9p-eng || lunch twrp_gta9p-userdebug
+        mka recoveryimage -j$(nproc --all)
 
-    - name: Package Recovery Output Artifacts
+    - name: Package Output Artifact
       run: |
-        cd ~/orangefox/out/target/product/${{ github.event.inputs.DEVICE_NAME }}
-        zip -r OrangeFox-12.1-gta9p-Build.zip recovery.img || zip -r OrangeFox-12.1-gta9p-Build.zip boot.img
+        cd ~/orangefox/out/target/product/gta9p
+        zip -r OrangeFox-gta9p-Built.zip recovery.img || echo "No direct recovery.img file found"
 
-    - name: Upload Finished Recovery Zip
+    - name: Upload Finished Recovery File
       uses: actions/upload-artifact@v4
       with:
-        name: OrangeFox-Built-Recovery
-        path: ~/orangefox/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/OrangeFox-12.1-gta9p-Build.zip
+        name: OrangeFox-gta9p-Recovery
+        path: ~/orangefox/out/target/product/gta9p/OrangeFox-gta9p-Built.zip
