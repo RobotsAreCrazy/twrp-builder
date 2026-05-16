@@ -68,8 +68,7 @@ jobs:
       run: |
         mkdir ~/orangefox
         cd ~/orangefox
-        repo init --depth=1 -u https://gitlab.com/OrangeFox/Manifest.git -b ${{ github.event.inputs.MANIFEST_BRANCH }}
-        repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
+        repo init --depth=1 -u https://github.com/OrangeFoxRecovery/Manifest.git -b 12.1
 
     - name: Clone Galaxy Tab A9+ Device Tree
       run: |
