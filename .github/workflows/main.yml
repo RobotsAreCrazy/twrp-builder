@@ -39,8 +39,7 @@ jobs:
       run: |
         mkdir ~/orangefox
         cd ~/orangefox
-        export REPO_URL='https://storage.googleapis.com/git-repo-downloads/repo'
-        repo init --depth=1 --no-repo-verify -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
+        repo init --depth=1 --no-repo-verify --repo-url=https://gerrit.googlesource.com/git-repo -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
         repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
 
     - name: Clone Cellular Tab A9+ Device Tree
