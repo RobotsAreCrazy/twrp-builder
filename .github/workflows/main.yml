@@ -64,7 +64,7 @@ jobs:
         git config --global user.name "RobotsAreCrazy"
         git config --global user.email "robotsarecrazy@github.com"
 
-        - name: Sync Minimal Manifest Source
+    - name: Sync Minimal Manifest Source
       run: |
         git config --global url."https://github.com/".insteadOf "git@github.com:"
         git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
